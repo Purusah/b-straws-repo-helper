@@ -8,7 +8,7 @@ export class TestOutputParser {
     constructor(
         private readonly proc: subprocess.ChildProcessWithoutNullStreams,
         private readonly item: vscode.TestItem,
-        private readonly run: vscode.TestRun
+        private readonly run: vscode.TestRun,
     ) {
         let testResultOk = false;
 
@@ -55,7 +55,7 @@ export class TestExecutor {
                     stdio: "pipe",
                     cwd: test.folder.uri.path,
                     env: {...process.env},
-                }
+                },
             );
             this.processes.push(new TestOutputParser(cp, item, this.runner));
         }

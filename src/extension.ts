@@ -1,7 +1,9 @@
 import * as vscode from "vscode";
 import { parse } from "./parser";
 import { repository, Testable } from "./repo";
-import { TestExecutor, TestOutputParser } from "./testOutputParser";
+import { TestExecutor } from "./testOutputParser";
+
+const testControllerItems: {[itemId: string]: vscode.TestItem} = {};
 
 export function activate(context: vscode.ExtensionContext) {
     const controller = vscode.tests.createTestController(
@@ -14,7 +16,7 @@ export function activate(context: vscode.ExtensionContext) {
         "Run Comp Tests",
         vscode.TestRunProfileKind.Run,
         (req, token) => runDocumentTests(controller, req, token),
-        true
+        true,
     );
 
     vscode.window.visibleTextEditors.forEach((e) => {
@@ -58,36 +60,42 @@ function addDocumentTests(controller: vscode.TestController, document: vscode.Te
     }
 
     const item = controller.createTestItem(file.getId(), file.getName(), document.uri);
+    item.canResolveChildren = true;
     controller.items.add(item);
+    testControllerItems[item.id] = item;
+    repository.set(item, file);
 
     parse(document, file, (node, parent) => {
-        const parentTestItem = controller.items.get(parent.getId());
+        const parentTestItem = testControllerItems[parent.getId()];
         if (parentTestItem === undefined) {
             throw new Error("parent should be present");
         }
 
         const nodeTest = Testable.newTestNode(node, parent);
-        let nodeTestItem = controller.items.get(nodeTest.getId());
-        if (nodeTestItem) {
-            parentTestItem.children.add(nodeTestItem);
+        let nodeTestItem = testControllerItems[nodeTest.getId()];
 
-            const existingNodeTest = repository.get(nodeTestItem);
-            if (existingNodeTest) {
-                return existingNodeTest;
-            }
+        // test not seen before
+        if (nodeTestItem === undefined) {
+            nodeTestItem = controller.createTestItem(nodeTest.getId(), nodeTest.getName(), undefined);
 
             repository.set(nodeTestItem, nodeTest);
+            parentTestItem.children.add(nodeTestItem);
+            testControllerItems[nodeTestItem.id] = nodeTestItem;
+
             return nodeTest;
         }
 
-        nodeTestItem = controller.createTestItem(nodeTest.getId(), nodeTest.getName(), undefined);
+        repository.set(nodeTestItem, nodeTest);
+        // test already exists and assigned to the correct parent
+        if (nodeTestItem.parent?.id === parentTestItem.id) {
+            return nodeTest;
+        }
+
+        // test was child of different parent
+        nodeTestItem.parent?.children?.delete(nodeTestItem.id);
         parentTestItem.children.add(nodeTestItem);
         return nodeTest;
     });
-
-    item.canResolveChildren = true;
-    controller.items.add(item);
-    repository.set(item, file);
 }
 
 function removeDocumentTests(controller: vscode.TestController, document: vscode.TextDocument) {
@@ -115,7 +123,7 @@ function getAllControllerTests(controller: vscode.TestController): vscode.TestIt
 async function runDocumentTests(
     controller: vscode.TestController,
     request: vscode.TestRunRequest,
-    token: vscode.CancellationToken
+    token: vscode.CancellationToken,
 ): Promise<void> {
     const run = controller.createTestRun(request);
 
@@ -133,7 +141,7 @@ async function runDocumentTests(
         }
         run.enqueued(t);
 
-        executor.start(t, file, );
+        executor.start(t, file );
     }
 
     await executor.wait(token);

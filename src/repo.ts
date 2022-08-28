@@ -9,7 +9,7 @@ export class Testable {
         private readonly name: string,
         public readonly folder: vscode.WorkspaceFolder,
         public readonly file: vscode.TextDocument,
-        public readonly type: "file" | "function"
+        public readonly type: "file" | "function",
     ) {};
 
     public getId(): string {
