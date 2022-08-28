@@ -25,6 +25,7 @@ const getTestFunctions = (source: ts.Node): ts.CallExpression[] => {
 };
 
 const _parse = (
+    source: ts.SourceFile,
     root: ts.Node,
     test: Testable,
     cb: (node: TestNode, parent: Testable) => Testable,
@@ -48,8 +49,9 @@ const _parse = (
         ) {
             return;
         }
-        const suite = cb({name: testNameLiteral.text}, test);
-        _parse(testArrowFunc.body, suite, cb);
+        const {line, character} = source.getLineAndCharacterOfPosition(testArrowFunc.pos);
+        const suite = cb({name: testNameLiteral.text, line, character}, test);
+        _parse(source, testArrowFunc.body, suite, cb);
 
     });
 };
@@ -59,10 +61,12 @@ export const parse = (
     test: Testable,
     cb: (node: TestNode, parent: Testable) => Testable,
 ): void => {
-    const rootAst = ts.createSourceFile(code.uri.path, code.getText(), ts.ScriptTarget.ES2020);
-    _parse(rootAst, test, cb);
+    const source = ts.createSourceFile(code.uri.path, code.getText(), ts.ScriptTarget.ES2020);
+    _parse(source, source, test, cb);
 };
 
 export interface TestNode {
     name: string;
+    line: number;
+    character: number;
 }

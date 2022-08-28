@@ -77,8 +77,10 @@ function addDocumentTests(controller: vscode.TestController, document: vscode.Te
 
         // test not seen before
         if (nodeTestItem === undefined) {
-            nodeTestItem = controller.createTestItem(nodeTest.getId(), nodeTest.getName(), undefined);
+            nodeTestItem = controller.createTestItem(nodeTest.getId(), nodeTest.getName(), document.uri);
             nodeTestItem.sortText = String(sortCounter++);
+            const testPosition = new vscode.Position(node.line, node.character);
+            nodeTestItem.range = new vscode.Range(testPosition, testPosition);
 
             repository.set(nodeTestItem, nodeTest);
             parentTestItem.children.add(nodeTestItem);
