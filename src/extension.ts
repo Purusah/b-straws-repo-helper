@@ -65,6 +65,7 @@ function addDocumentTests(controller: vscode.TestController, document: vscode.Te
     testControllerItems[item.id] = item;
     repository.set(item, file);
 
+    let sortCounter = 0; // to keep the view tests order similar to to the file
     parse(document, file, (node, parent) => {
         const parentTestItem = testControllerItems[parent.getId()];
         if (parentTestItem === undefined) {
@@ -77,6 +78,7 @@ function addDocumentTests(controller: vscode.TestController, document: vscode.Te
         // test not seen before
         if (nodeTestItem === undefined) {
             nodeTestItem = controller.createTestItem(nodeTest.getId(), nodeTest.getName(), undefined);
+            nodeTestItem.sortText = String(sortCounter++);
 
             repository.set(nodeTestItem, nodeTest);
             parentTestItem.children.add(nodeTestItem);

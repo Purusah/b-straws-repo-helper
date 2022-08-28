@@ -11,6 +11,5 @@
 - [ ] Run mcomp tests
 - [ ] [Reset test result after file change](https://code.visualstudio.com/api/extension-guides/testing#publishonly-controllers)
 - [ ] Add tests
-- [ ] Tests order same in the file view and in the file
 - [ ] UI element to run separate tests (like in the Rust extension)
 - [ ] Group test names under the package/service names
