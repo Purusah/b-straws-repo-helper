@@ -2,6 +2,8 @@
 
 - [ ] Bug: closing test file should reset test run results
 - [ ] Bug: closing and opening test file doesn't resolve children
+- [ ] Run csuite, etc.
+- [ ] Go To tests for the non-file tests
 - [ ] Update test names after file change
 - [ ] Add test failed result
 - [ ] Parse stderr execution duration
