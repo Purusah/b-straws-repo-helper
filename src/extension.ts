@@ -109,7 +109,21 @@ function removeDocumentTests(controller: vscode.TestController, document: vscode
     }
 
     const file = Testable.newTestFile(folder, document);
+    const item = testControllerItems[file.getId()];
     controller.items.delete(file.getId());
+
+    // TODO move to separate function
+    const cleanItems = (i: vscode.TestItem) => {
+        i.children.forEach((c) => {
+            cleanItems(c);
+        });
+
+        i?.parent?.children.delete(i.id);
+        delete testControllerItems[i.id];
+        repository.delete(i);
+    };
+
+    cleanItems(item);
 }
 
 function getAllControllerTests(controller: vscode.TestController): vscode.TestItem[] {
