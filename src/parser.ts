@@ -37,14 +37,6 @@ export const parse = (
 ): void => {
     const rootAst = ts.createSourceFile(file.uri.path, file.getText(), ts.ScriptTarget.ES2020);
 
-    // const resolveChild = (node: AstNode) => {
-    //     if (node.kind === ts.SyntaxKind.CallExpression) {
-    //         [];
-    //     }
-    //     console.dir(`${node.kind} ${node.getText()}`);
-    //     node.forEachChild(f);
-    // };
-
     const cSuites = findCSuites(rootAst);
     cSuites.forEach((c) => {
         const name: ts.Expression | undefined = c.arguments[0];
