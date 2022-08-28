@@ -12,3 +12,4 @@
 - [ ] Add tests
 - [ ] Tests order same in the file view and in the file
 - [ ] UI element to run separate tests (like in the Rust extension)
+- [ ] Group test names under the package/service names
