@@ -3,6 +3,7 @@
 - [ ] Bug: closing test file should reset test run results
 - [ ] Update test names after file change
 - [ ] Add test failed result
+- [ ] Running parent test should properly parse children results
 - [ ] Parse stderr execution duration
 - [ ] Run spec tests
 - [ ] Run ecomp tests

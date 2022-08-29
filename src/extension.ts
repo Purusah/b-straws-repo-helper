@@ -111,9 +111,10 @@ function removeDocumentTests(controller: vscode.TestController, document: vscode
     if (!folder) {
         return;
     }
-
     const file = Testable.newTestFile(folder, document);
     const item = testControllerItems[file.getId()];
+
+    // clean in memory storages
     controller.items.delete(file.getId());
 
     // TODO move to separate function
@@ -143,7 +144,7 @@ async function runDocumentTests(
     request: vscode.TestRunRequest,
     token: vscode.CancellationToken,
 ): Promise<void> {
-    const run = controller.createTestRun(request);
+    const run = controller.createTestRun(request, undefined, false);
 
     const executor = new TestExecutor(run);
     for (const t of request.include ?? getAllControllerTests(controller)) {
