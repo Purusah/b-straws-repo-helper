@@ -48,8 +48,11 @@ export class TestExecutor {
     }
 
     public start(item: vscode.TestItem, test: Testable) {
-        if (test.type === "file") {
-            const cp = subprocess.spawn(
+        let cp: subprocess.ChildProcessWithoutNullStreams;
+
+        switch (test.type) {
+        case "file": {
+            cp = subprocess.spawn(
                 "yarn", ["ctest", relative(test.folder.uri.fsPath, test.file.uri.fsPath)],
                 {
                     stdio: "pipe",
@@ -57,11 +60,24 @@ export class TestExecutor {
                     env: {...process.env},
                 },
             );
-            this.processes.push(new TestOutputParser(cp, item, this.runner));
+            break;
         }
-        if (test.type === "function") {
-            // TODO
+        case "function": {
+            cp = subprocess.spawn(
+                "yarn", ["ctest", `-t="${test.getName()}"` , relative(test.folder.uri.fsPath, test.file.uri.fsPath)],
+                {
+                    stdio: "pipe",
+                    cwd: test.folder.uri.path,
+                    env: {...process.env},
+                },
+            );
+            break;
         }
+        default: {
+            throw new Error(test.type);
+        }}
+
+        this.processes.push(new TestOutputParser(cp!, item, this.runner));
     };
 
     public async wait(token: vscode.CancellationToken): Promise<void> {

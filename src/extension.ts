@@ -159,7 +159,7 @@ async function runDocumentTests(
         }
         run.enqueued(t);
 
-        executor.start(t, file );
+        executor.start(t, file);
     }
 
     await executor.wait(token);

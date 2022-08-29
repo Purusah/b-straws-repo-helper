@@ -23,6 +23,7 @@
         "no-throw-literal": "warn",
         "quotes": ["error", "double"],
         "semi": "off",
+        "space-in-parens": ["error", "never"],
         "space-infix-ops": ["error", { "int32Hint": false }]
     },
     "ignorePatterns": [
