@@ -60,7 +60,6 @@ function addDocumentTests(controller: vscode.TestController, document: vscode.Te
     }
 
     const item = controller.createTestItem(file.getId(), file.getName(), document.uri);
-    item.canResolveChildren = true;
     controller.items.add(item);
     testControllerItems[item.id] = item;
     repository.set(item, file);
@@ -147,20 +146,21 @@ async function runDocumentTests(
     const run = controller.createTestRun(request, undefined, false);
 
     const executor = new TestExecutor(run);
-    for (const t of request.include ?? getAllControllerTests(controller)) {
+    for (const item of request.include ?? getAllControllerTests(controller)) {
         if (token.isCancellationRequested) {
-            run.skipped(t);
+            run.skipped(item);
             continue;
         }
 
-        const file = repository.get(t);
-        if (!file) {
-            run.skipped(t);
+        const testable = repository.get(item);
+        console.dir(item);
+        if (!testable) {
+            run.skipped(item);
             continue;
         }
-        run.enqueued(t);
+        run.enqueued(item);
 
-        executor.start(t, file);
+        executor.start(item, testable);
     }
 
     await executor.wait(token);
