@@ -153,7 +153,6 @@ async function runDocumentTests(
         }
 
         const testable = repository.get(item);
-        console.dir(item);
         if (!testable) {
             run.skipped(item);
             continue;

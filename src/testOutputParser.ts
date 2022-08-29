@@ -13,7 +13,13 @@ export class TestOutputParser {
         let testResultOk = false;
 
         this.proc.stderr.setEncoding("utf-8").on("data", (data: string) => {
-            if (!testResultOk && data.startsWith("PASS")) {
+            const cleanedData = data.replace(
+                /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g,
+                "",
+            ).trimStart();
+            console.dir(cleanedData);
+            console.dir(cleanedData.startsWith("PASS"));
+            if (!testResultOk && cleanedData.startsWith("PASS")) {
                 testResultOk = true;
             }
             run.appendOutput(data.replace(/(?<!\r)\n/gm, "\r\n"), undefined, this.item);
@@ -50,25 +56,28 @@ export class TestExecutor {
     public start(item: vscode.TestItem, test: Testable) {
         let cp: subprocess.ChildProcessWithoutNullStreams;
 
+        const testFilePath = relative(test.folder.uri.fsPath, test.file.uri.fsPath);
         switch (test.type) {
         case "file": {
             cp = subprocess.spawn(
-                "yarn", ["ctest", relative(test.folder.uri.fsPath, test.file.uri.fsPath)],
+                "yarn", ["ctest", "--color", testFilePath],
                 {
                     stdio: "pipe",
                     cwd: test.folder.uri.path,
-                    env: {...process.env},
+                    // eslint-disable-next-line @typescript-eslint/naming-convention
+                    env: {...process.env, FORCE_COLOR: "1"},
                 },
             );
             break;
         }
         case "function": {
             cp = subprocess.spawn(
-                "yarn", ["ctest", `-t="${test.getName()}"` , relative(test.folder.uri.fsPath, test.file.uri.fsPath)],
+                "yarn", ["ctest", "--color", `-t="${test.getName()}"`, testFilePath],
                 {
                     stdio: "pipe",
                     cwd: test.folder.uri.path,
-                    env: {...process.env},
+                    // eslint-disable-next-line @typescript-eslint/naming-convention
+                    env: {...process.env, FORCE_COLOR: "1"},
                 },
             );
             break;

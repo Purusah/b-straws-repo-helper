@@ -1,5 +1,6 @@
 # Ideas
 
+- Bug: failed tests are not updated to the passed after success
 - Update test names after file change
 - Add test failed result
 - Running parent test should properly parse children results

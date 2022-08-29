@@ -13,6 +13,7 @@
         "@typescript-eslint/semi": "warn",
         "arrow-spacing": ["error", { "before": true, "after": true }],
         "comma-dangle": ["error", "always-multiline"],
+        "comma-spacing": ["error", { "before": false, "after": true }],
         "curly": "warn",
         "eol-last": ["error", "always"],
         "eqeqeq": "warn",
