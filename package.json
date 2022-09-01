@@ -1,8 +1,11 @@
 {
   "name": "b-straws-repo-helper",
   "displayName": "B Repo Helper",
-  "description": "",
-  "version": "0.0.0",
+  "description": "Extension that makes repo convenient",
+  "icon": "assets/icon-128.png",
+  "license": "Apache-2.0",
+  "main": "./out/extension.js",
+  "preview": true,
   "private": true,
   "engines": {
     "vscode": "^1.70.0"
@@ -10,10 +13,11 @@
   "categories": [
     "Other"
   ],
+  "version": "0.0.0",
+
   "activationEvents": [
     "onFileSystem:file"
   ],
-  "main": "./out/extension.js",
   "contributes": {},
   "scripts": {
     "vscode:prepublish": "npm run compile",
