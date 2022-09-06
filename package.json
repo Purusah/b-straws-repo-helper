@@ -13,8 +13,8 @@
   "categories": [
     "Other"
   ],
+  "publisher": "Vladyslav Bohaichuk",
   "version": "0.0.0",
-
   "activationEvents": [
     "onFileSystem:file"
   ],
