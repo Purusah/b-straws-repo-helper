@@ -17,7 +17,7 @@
   "categories": [
     "Other"
   ],
-  "publisher": "Vladyslav Bohaichuk",
+  "publisher": "purusah",
   "version": "0.1.0",
   "activationEvents": [
     "onFileSystem:file"
