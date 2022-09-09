@@ -6,9 +6,17 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+## [0.2.0] - 2022-09-10
+
 ### Added
 
 - Group test tree under the service names
+
+## [0.1.1] - 2022-09-10
+
+### Fixed
+
+- Start up issue, due to lack of the dependency
 
 ## [0.1.0] - 2022-09-06
 
