@@ -1,6 +1,5 @@
 # Ideas
 
-- Bug: failed tests are not updated to the passed after success
 - Update test names after file change
 - Add test failed result
 - Running parent test should properly parse children results
@@ -9,6 +8,7 @@
 - Run ecomp tests
 - Run mcomp tests
 - Add tests
+- Prepublish script to update CHANGELOG version
 - [Bundling](https://code.visualstudio.com/api/working-with-extensions/bundling-extension#using-webpack) with Webpack
 
 # Can't resolve
