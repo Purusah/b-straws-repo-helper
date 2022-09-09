@@ -1,42 +1,111 @@
 import * as vscode from "vscode";
 import { TestNode } from "./parser";
 
-export const repository = new WeakMap<vscode.TestItem, Testable>();
+const allowedTestKinds = new Set(["comp"]);
 
-export class Testable {
+export class TestableService {
+    public readonly type = "service";
+
     constructor(
-        private readonly id: string,
         private readonly name: string,
-        public readonly folder: vscode.WorkspaceFolder,
-        public readonly file: vscode.TextDocument,
-        public readonly type: "file" | "function",
+        public readonly path: vscode.Uri,
+        public readonly workspace: vscode.WorkspaceFolder,
+        private readonly kind: string,
     ) {};
 
     public getId(): string {
-        return this.id;
+        return `/${this.name}-${this.kind}`;
+    }
+
+    public getName(): string {
+        return `${this.name}-${this.kind}`;
+    }
+
+    public static new(file: TestableFile): TestableService | null {
+        const pathParts = file.file.uri.path.split("/");
+
+        const indexOfTest = pathParts.indexOf("test");
+        const name = pathParts.at(indexOfTest - 1);
+
+        const folder = file.file.uri.with({path: pathParts.slice(0, indexOfTest + 2).join("/")});
+
+        return new TestableService(name!, folder, file.workspace, file.kind);
+    }
+}
+
+export class TestableFile {
+    public readonly type = "file";
+
+    constructor(
+        public readonly file: vscode.TextDocument,
+        public readonly workspace: vscode.WorkspaceFolder,
+        public readonly kind: string,
+    ) {};
+
+    public getId(): string {
+        return this.file.uri.toString();
+    }
+
+    public getName(): string {
+        return this.file.uri.path.split("/").pop()!;
+    }
+
+    public static new(document: vscode.TextDocument): TestableFile | null {
+        if (document.uri.scheme !== "file") {
+            return null;
+        }
+
+        const pathParts = document.uri.path.split("/");
+
+        const indexOfTest = pathParts.indexOf("test");
+        if (indexOfTest < 0) {
+            return null;
+        }
+
+        const kind = pathParts.at(indexOfTest + 1);
+        if (kind === undefined || !allowedTestKinds.has(kind)) {
+            return null;
+        }
+
+        if (!document.uri.path.endsWith("-comp.ts")) {
+            return null;
+        }
+
+        const workspace = vscode.workspace.getWorkspaceFolder(document.uri);
+        if (workspace === undefined) {
+            return null;
+        }
+
+        return new TestableFile(document, workspace, kind);
+    }
+}
+
+export class TestableFunction {
+    public readonly type = "function";
+    constructor(
+        private readonly name: string,
+        private readonly parent: TestableFunction | TestableFile,
+    ) {};
+
+    public getId(): string {
+        return `${this.parent.getId()}/${this.name}`;
     }
 
     public getName(): string {
         return this.name;
     }
 
-    public static newTestFile(folder: vscode.WorkspaceFolder, file: vscode.TextDocument): Testable {
-        return new Testable(
-            file.uri.toString(),
-            file.uri.path.split("/").pop()!,
-            folder,
-            file,
-            "file",
-        );
+    public getParentFile(): TestableFile {
+        if (this.parent instanceof TestableFile) {
+            return this.parent;
+        }
+
+        return this.parent.getParentFile();
     }
 
-    public static newTestNode(node: TestNode, parent: Testable): Testable {
-        return new Testable(
-            `${parent.getId()}/${node.name}`,
-            node.name,
-            parent.folder,
-            parent.file,
-            "function",
-        );
+    public static new(node: TestNode, parent: TestableFunction | TestableFile): TestableFunction {
+        return new TestableFunction(node.name, parent);
     }
 }
+
+export type Testable = TestableFunction | TestableFile | TestableService;

@@ -5,6 +5,7 @@ import { Testable } from "./repo";
 
 export class TestOutputParser {
     isReady: boolean = false;
+
     constructor(
         private readonly proc: subprocess.ChildProcessWithoutNullStreams,
         private readonly item: vscode.TestItem,
@@ -17,8 +18,6 @@ export class TestOutputParser {
                 /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g,
                 "",
             ).trimStart();
-            console.dir(cleanedData);
-            console.dir(cleanedData.startsWith("PASS"));
             if (!testResultOk && cleanedData.startsWith("PASS")) {
                 testResultOk = true;
             }
@@ -30,6 +29,10 @@ export class TestOutputParser {
 
         this.proc.on("exit", (_code, _signal) => {
             this.isReady = true;
+            if (this.proc.killed) {
+                // console message: setting the state of test is a no-op after the run ends
+                return;
+            }
 
             if (testResultOk) {
                 this.run.passed(this.item);
@@ -40,7 +43,6 @@ export class TestOutputParser {
     };
 
     public kill(): boolean {
-        this.run.skipped(this.item);
         return this.proc.kill();
 
     }
@@ -54,39 +56,37 @@ export class TestExecutor {
     }
 
     public start(item: vscode.TestItem, test: Testable) {
-        let cp: subprocess.ChildProcessWithoutNullStreams;
+        let args: string[];
+        let cwd: string;
 
-        const testFilePath = relative(test.folder.uri.fsPath, test.file.uri.fsPath);
         switch (test.type) {
+        case "service": {
+            args = ["ctest", "--color", test.path.fsPath];
+            cwd = test.workspace.uri.path;
+            break;
+        }
         case "file": {
-            cp = subprocess.spawn(
-                "yarn", ["ctest", "--color", testFilePath],
-                {
-                    stdio: "pipe",
-                    cwd: test.folder.uri.path,
-                    // eslint-disable-next-line @typescript-eslint/naming-convention
-                    env: {...process.env, FORCE_COLOR: "1"},
-                },
-            );
+            args = ["ctest", "--color", relative(test.workspace.uri.fsPath, test.file.uri.fsPath)];
+            cwd = test.workspace.uri.path;
             break;
         }
         case "function": {
-            cp = subprocess.spawn(
-                "yarn", ["ctest", "--color", `-t="${test.getName()}"`, testFilePath],
-                {
-                    stdio: "pipe",
-                    cwd: test.folder.uri.path,
-                    // eslint-disable-next-line @typescript-eslint/naming-convention
-                    env: {...process.env, FORCE_COLOR: "1"},
-                },
-            );
+            const filePath = relative(test.getParentFile().workspace.uri.fsPath, test.getParentFile().file.uri.fsPath);
+            args = ["ctest", "--color", `-t="${test.getName()}"`, filePath];
+            cwd = test.getParentFile().workspace.uri.path;
             break;
-        }
-        default: {
-            throw new Error(test.type);
         }}
 
-        this.processes.push(new TestOutputParser(cp!, item, this.runner));
+        const cp = subprocess.spawn(
+            "yarn", args,
+            {
+                stdio: "pipe",
+                cwd,
+                env: {...process.env, FORCE_COLOR: "1"}, // eslint-disable-line @typescript-eslint/naming-convention
+            },
+        );
+
+        this.processes.push(new TestOutputParser(cp, item, this.runner));
     };
 
     public async wait(token: vscode.CancellationToken): Promise<void> {

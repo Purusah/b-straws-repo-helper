@@ -1,9 +1,10 @@
 import * as vscode from "vscode";
 import { parse } from "./parser";
-import { repository, Testable } from "./repo";
+import { Testable, TestableFile, TestableFunction, TestableService } from "./repo";
 import { TestExecutor } from "./testOutputParser";
 
-const testControllerItems: {[itemId: string]: vscode.TestItem} = {};
+const repoItemIdToItem: {[itemId: string]: vscode.TestItem} = {};
+const repoItemToTestable = new WeakMap<vscode.TestItem, Testable>();
 
 export function activate(context: vscode.ExtensionContext) {
     const controller = vscode.tests.createTestController(
@@ -31,48 +32,44 @@ export function activate(context: vscode.ExtensionContext) {
     );
 }
 
-function isDocumentTestFile(e: vscode.TextDocument): boolean {
-    if (e.uri.scheme !== "file") {
-        return false;
-    }
-
-    if (!e.uri.path.endsWith("-comp.ts")) {
-        return false;
-    }
-
-    return true;
-};
-
 function addDocumentTests(controller: vscode.TestController, document: vscode.TextDocument) {
-    if (!isDocumentTestFile(document)) {
+    const file = TestableFile.new(document);
+    if (file === null) {
         return;
     }
 
-    const folder = vscode.workspace.getWorkspaceFolder(document.uri);
-    if (!folder) {
+    const service = TestableService.new(file);
+    if (service === null) {
         return;
     }
 
-    const file = Testable.newTestFile(folder, document);
-    const existingTestFileItem = controller.items.get(file.getId());
-    if (existingTestFileItem !== undefined) {
-        return existingTestFileItem;
+    let serviceItem = controller.items.get(service.getId());
+    if (serviceItem === undefined) {
+        serviceItem = controller.createTestItem(service.getId(), service.getName(), undefined);
+
+        controller.items.add(serviceItem);
+        repoItemIdToItem[serviceItem.id] = serviceItem;
+        repoItemToTestable.set(serviceItem, service);
     }
 
-    const item = controller.createTestItem(file.getId(), file.getName(), document.uri);
-    controller.items.add(item);
-    testControllerItems[item.id] = item;
-    repository.set(item, file);
+    let fileItem = serviceItem.children.get(file.getId());
+    if (fileItem === undefined) {
+        fileItem = controller.createTestItem(file.getId(), file.getName(), file.file.uri);
+
+        serviceItem.children.add(fileItem);
+        repoItemIdToItem[fileItem.id] = fileItem;
+        repoItemToTestable.set(fileItem, file);
+    }
 
     let sortCounter = 0; // to keep the view tests order similar to to the file
     parse(document, file, (node, parent) => {
-        const parentTestItem = testControllerItems[parent.getId()];
+        const parentTestItem = repoItemIdToItem[parent.getId()];
         if (parentTestItem === undefined) {
             throw new Error("parent should be present");
         }
 
-        const nodeTest = Testable.newTestNode(node, parent);
-        let nodeTestItem = testControllerItems[nodeTest.getId()];
+        const nodeTest = TestableFunction.new(node, parent);
+        let nodeTestItem = repoItemIdToItem[nodeTest.getId()];
 
         // test not seen before
         if (nodeTestItem === undefined) {
@@ -81,14 +78,14 @@ function addDocumentTests(controller: vscode.TestController, document: vscode.Te
             const testPosition = new vscode.Position(node.line, node.character);
             nodeTestItem.range = new vscode.Range(testPosition, testPosition);
 
-            repository.set(nodeTestItem, nodeTest);
+            repoItemToTestable.set(nodeTestItem, nodeTest);
             parentTestItem.children.add(nodeTestItem);
-            testControllerItems[nodeTestItem.id] = nodeTestItem;
+            repoItemIdToItem[nodeTestItem.id] = nodeTestItem;
 
             return nodeTest;
         }
 
-        repository.set(nodeTestItem, nodeTest);
+        repoItemToTestable.set(nodeTestItem, nodeTest);
         // test already exists and assigned to the correct parent
         if (nodeTestItem.parent?.id === parentTestItem.id) {
             return nodeTest;
@@ -102,19 +99,25 @@ function addDocumentTests(controller: vscode.TestController, document: vscode.Te
 }
 
 function removeDocumentTests(controller: vscode.TestController, document: vscode.TextDocument) {
-    if (!isDocumentTestFile(document)) {
+    const file = TestableFile.new(document);
+    if (file === null) {
         return;
     }
 
-    const folder = vscode.workspace.getWorkspaceFolder(document.uri);
-    if (!folder) {
+    const service = TestableService.new(file);
+    if (service === null) {
         return;
     }
-    const file = Testable.newTestFile(folder, document);
-    const item = testControllerItems[file.getId()];
 
-    // clean in memory storages
-    controller.items.delete(file.getId());
+    const serviceItem = repoItemIdToItem[service.getId()];
+    if (serviceItem === undefined) {
+        return;
+    }
+
+    const fileItem = serviceItem.children.get(file.getId());
+    if (fileItem === undefined) {
+        return;
+    }
 
     // TODO move to separate function
     const cleanItems = (i: vscode.TestItem) => {
@@ -123,11 +126,22 @@ function removeDocumentTests(controller: vscode.TestController, document: vscode
         });
 
         i?.parent?.children.delete(i.id);
-        delete testControllerItems[i.id];
-        repository.delete(i);
+        delete repoItemIdToItem[i.id];
+        repoItemToTestable.delete(i);
     };
 
-    cleanItems(item);
+    cleanItems(fileItem);
+
+    serviceItem.children.delete(file.getId());
+    delete repoItemIdToItem[file.getId()];
+    repoItemToTestable.delete(fileItem);
+
+    if (serviceItem.children.size === 0) {
+        controller.items.delete(service.getId());
+        delete repoItemIdToItem[service.getId()];
+        repoItemToTestable.delete(serviceItem);
+    }
+
 }
 
 function getAllControllerTests(controller: vscode.TestController): vscode.TestItem[] {
@@ -148,11 +162,10 @@ async function runDocumentTests(
     const executor = new TestExecutor(run);
     for (const item of request.include ?? getAllControllerTests(controller)) {
         if (token.isCancellationRequested) {
-            run.skipped(item);
             continue;
         }
 
-        const testable = repository.get(item);
+        const testable = repoItemToTestable.get(item);
         if (!testable) {
             run.skipped(item);
             continue;

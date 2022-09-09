@@ -9,7 +9,6 @@
 - Run ecomp tests
 - Run mcomp tests
 - Add tests
-- Group test names under the package/service names
 - [Bundling](https://code.visualstudio.com/api/working-with-extensions/bundling-extension#using-webpack) with Webpack
 
 # Can't resolve

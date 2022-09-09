@@ -1,6 +1,6 @@
 import * as ts from "typescript";
 import * as vscode from "vscode";
-import { Testable } from "./repo";
+import { TestableFunction, TestableFile } from "./repo";
 
 const testIdentifiers = ["ctest", "describe", "csuite"];
 
@@ -27,8 +27,8 @@ const getTestFunctions = (source: ts.Node): ts.CallExpression[] => {
 const _parse = (
     source: ts.SourceFile,
     root: ts.Node,
-    test: Testable,
-    cb: (node: TestNode, parent: Testable) => Testable,
+    test: TestableFunction | TestableFile,
+    cb: (node: TestNode, parent: TestableFunction | TestableFile) => TestableFunction,
 ): void => {
     const functions = getTestFunctions(root);
 
@@ -58,8 +58,8 @@ const _parse = (
 
 export const parse = (
     code: vscode.TextDocument,
-    test: Testable,
-    cb: (node: TestNode, parent: Testable) => Testable,
+    test: TestableFile,
+    cb: (node: TestNode, parent: TestableFunction | TestableFile) => TestableFunction,
 ): void => {
     const source = ts.createSourceFile(code.uri.path, code.getText(), ts.ScriptTarget.ES2020);
     _parse(source, source, test, cb);
