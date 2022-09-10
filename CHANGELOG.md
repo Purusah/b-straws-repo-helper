@@ -6,6 +6,8 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+## [0.3.0] - 2022-09-10
+
 ### Added
 
 - Update test names after file change
@@ -18,7 +20,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 - Group test tree under the service names
 
-## [0.1.1] - 2022-09-10
+## [0.1.1] - 2022-09-07
 
 ### Fixed
 
