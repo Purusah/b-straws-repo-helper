@@ -9,6 +9,8 @@
 - Run mcomp tests
 - Add tests
 - Prepublish script to update CHANGELOG version
+- Command to run any tests in any file
+- Command to run any tests in any folder
 - [Bundling](https://code.visualstudio.com/api/working-with-extensions/bundling-extension#using-webpack) with Webpack
 
 # Can't resolve
