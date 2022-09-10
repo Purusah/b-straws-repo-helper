@@ -6,43 +6,7 @@ import { TestExecutor } from "./testOutputParser";
 const repoItemIdToItem: {[itemId: string]: vscode.TestItem} = {};
 const repoItemToTestable = new WeakMap<vscode.TestItem, Testable>();
 
-export function activate(context: vscode.ExtensionContext) {
-    const controller = vscode.tests.createTestController(
-        "compTests",
-        "B Comp Tests",
-    );
-    context.subscriptions.push(controller);
-
-    controller.createRunProfile(
-        "Run Comp Tests",
-        vscode.TestRunProfileKind.Run,
-        (req, token) => runDocumentTests(controller, req, token),
-        true,
-    );
-
-    vscode.window.visibleTextEditors.forEach((e) => {
-        addDocumentTests(controller, e.document);
-    });
-
-    // update available tests on
-    context.subscriptions.push(
-        vscode.workspace.onDidOpenTextDocument(e => addDocumentTests(controller, e)),
-        vscode.workspace.onDidChangeTextDocument(e => addDocumentTests(controller, e.document)),
-        vscode.workspace.onDidCloseTextDocument(e => removeDocumentTests(controller, e)),
-    );
-}
-
-function addDocumentTests(controller: vscode.TestController, document: vscode.TextDocument) {
-    const file = TestableFile.new(document);
-    if (file === null) {
-        return;
-    }
-
-    const service = TestableService.new(file);
-    if (service === null) {
-        return;
-    }
-
+const addDocumentTests = (controller: vscode.TestController, service: TestableService, file: TestableFile) => {
     let serviceItem = controller.items.get(service.getId());
     if (serviceItem === undefined) {
         serviceItem = controller.createTestItem(service.getId(), service.getName(), undefined);
@@ -62,7 +26,7 @@ function addDocumentTests(controller: vscode.TestController, document: vscode.Te
     }
 
     let sortCounter = 0; // to keep the view tests order similar to to the file
-    parse(document, file, (node, parent) => {
+    parse(file.file, file, (node, parent) => {
         const parentTestItem = repoItemIdToItem[parent.getId()];
         if (parentTestItem === undefined) {
             throw new Error("parent should be present");
@@ -73,7 +37,7 @@ function addDocumentTests(controller: vscode.TestController, document: vscode.Te
 
         // test not seen before
         if (nodeTestItem === undefined) {
-            nodeTestItem = controller.createTestItem(nodeTest.getId(), nodeTest.getName(), document.uri);
+            nodeTestItem = controller.createTestItem(nodeTest.getId(), nodeTest.getName(), file.file.uri);
             nodeTestItem.sortText = String(sortCounter++);
             const testPosition = new vscode.Position(node.line, node.character);
             nodeTestItem.range = new vscode.Range(testPosition, testPosition);
@@ -96,9 +60,9 @@ function addDocumentTests(controller: vscode.TestController, document: vscode.Te
         parentTestItem.children.add(nodeTestItem);
         return nodeTest;
     });
-}
+};
 
-function removeDocumentTests(controller: vscode.TestController, document: vscode.TextDocument) {
+const removeDocumentTests = (controller: vscode.TestController, document: vscode.TextDocument) => {
     const file = TestableFile.new(document);
     if (file === null) {
         return;
@@ -141,22 +105,21 @@ function removeDocumentTests(controller: vscode.TestController, document: vscode
         delete repoItemIdToItem[service.getId()];
         repoItemToTestable.delete(serviceItem);
     }
+};
 
-}
-
-function getAllControllerTests(controller: vscode.TestController): vscode.TestItem[] {
+const getAllControllerTests = (controller: vscode.TestController): vscode.TestItem[] => {
     const tests: vscode.TestItem[] = [];
     controller.items.forEach((i) => {
         tests.push(i);
     });
     return tests;
-}
+};
 
-async function runDocumentTests(
+const runDocumentTests = async (
     controller: vscode.TestController,
     request: vscode.TestRunRequest,
     token: vscode.CancellationToken,
-): Promise<void> {
+): Promise<void> => {
     const run = controller.createTestRun(request, undefined, false);
 
     const executor = new TestExecutor(run);
@@ -177,6 +140,74 @@ async function runDocumentTests(
 
     await executor.wait(token);
     run.end();
+};
+
+const onOpenDocument = (controller: vscode.TestController, document: vscode.TextDocument) => {
+    const file = TestableFile.new(document);
+    if (file === null) {
+        return;
+    }
+
+    const service = TestableService.new(file);
+    if (service === null) {
+        return;
+    }
+
+    addDocumentTests(controller, service, file);
+};
+
+const onUpdateDocument = (controller: vscode.TestController, event: vscode.TextDocumentChangeEvent) => {
+    const file = TestableFile.new(event.document);
+    if (file === null) {
+        return;
+    }
+
+    const service = TestableService.new(file);
+    if (service === null) {
+        return;
+    }
+
+    removeDocumentTests(controller, event.document);
+    addDocumentTests(controller, service, file);
+};
+
+const onUpdateDocumentThrottled = (controller: vscode.TestController): (e: vscode.TextDocumentChangeEvent) => void => {
+    let lastCalled = 0;
+
+    return (e: vscode.TextDocumentChangeEvent) => {
+        const now = new Date().getTime();
+        if(now < lastCalled + 1000) {
+            return;
+        }
+        lastCalled = now;
+        onUpdateDocument(controller, e);
+    };
+};
+
+export function activate(context: vscode.ExtensionContext) {
+    const controller = vscode.tests.createTestController(
+        "compTests",
+        "B Comp Tests",
+    );
+    context.subscriptions.push(controller);
+
+    controller.createRunProfile(
+        "Run Comp Tests",
+        vscode.TestRunProfileKind.Run,
+        (req, token) => runDocumentTests(controller, req, token),
+        true,
+    );
+
+    vscode.window.visibleTextEditors.forEach((e) => {
+        onOpenDocument(controller, e.document);
+    });
+
+    // update available tests on
+    context.subscriptions.push(
+        vscode.workspace.onDidOpenTextDocument(e => onOpenDocument(controller, e)),
+        vscode.workspace.onDidChangeTextDocument(onUpdateDocumentThrottled(controller)),
+        vscode.workspace.onDidCloseTextDocument(e => removeDocumentTests(controller, e)),
+    );
 }
 
 export function deactivate() {}

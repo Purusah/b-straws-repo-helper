@@ -1,6 +1,6 @@
 # Ideas
 
-- Update test names after file change
+- Update test names after file change without test tree collapsing
 - Add test failed result
 - Running parent test should properly parse children results
 - Parse stderr execution duration

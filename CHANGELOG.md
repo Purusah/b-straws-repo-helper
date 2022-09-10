@@ -6,6 +6,12 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+### Added
+
+- Update test names after file change
+- Update test names after file name change
+- Throttle file updates
+
 ## [0.2.0] - 2022-09-10
 
 ### Added
