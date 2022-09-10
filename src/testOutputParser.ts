@@ -2,8 +2,9 @@ import * as subprocess from "node:child_process";
 import { relative } from "node:path/posix";
 import * as vscode from "vscode";
 import { Testable } from "./repo";
+import { TestKind } from "./testKind";
 
-export class TestOutputParser {
+class TestOutputParser {
     isReady: boolean = false;
 
     constructor(
@@ -50,6 +51,10 @@ export class TestOutputParser {
 
 export class TestExecutor {
     private processes: TestOutputParser[];
+    private testKindToCommand: {[key in TestKind]: string} = {
+        "comp": "ctest",
+        "spec": "test",
+    };
 
     constructor(private readonly runner: vscode.TestRun) {
         this.processes = [];
@@ -61,19 +66,24 @@ export class TestExecutor {
 
         switch (test.type) {
         case "service": {
-            args = ["ctest", "--color", test.path.fsPath];
+            args = [this.testKindToCommand[test.kind], "--color", test.path.fsPath];
             cwd = test.workspace.uri.path;
             break;
         }
         case "file": {
-            args = ["ctest", "--color", relative(test.workspace.uri.fsPath, test.file.uri.fsPath)];
+            args = [
+                this.testKindToCommand[test.kind],
+                "--color",
+                relative(test.workspace.uri.fsPath, test.file.uri.fsPath),
+            ];
             cwd = test.workspace.uri.path;
             break;
         }
         case "function": {
-            const filePath = relative(test.getParentFile().workspace.uri.fsPath, test.getParentFile().file.uri.fsPath);
-            args = ["ctest", "--color", `-t="${test.getName()}"`, filePath];
-            cwd = test.getParentFile().workspace.uri.path;
+            const parentFile = test.getParentFile();
+            const filePath = relative(parentFile.workspace.uri.fsPath, parentFile.file.uri.fsPath);
+            args = [this.testKindToCommand[parentFile.kind], "--color", `-t="${test.getName()}"`, filePath];
+            cwd = parentFile.workspace.uri.path;
             break;
         }}
 

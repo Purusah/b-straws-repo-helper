@@ -1,7 +1,6 @@
 import * as vscode from "vscode";
 import { TestNode } from "./parser";
-
-const allowedTestKinds = new Set(["comp"]);
+import { isAllowedTestKind, TestKind } from "./testKind";
 
 export class TestableService {
     public readonly type = "service";
@@ -10,7 +9,7 @@ export class TestableService {
         private readonly name: string,
         public readonly path: vscode.Uri,
         public readonly workspace: vscode.WorkspaceFolder,
-        private readonly kind: string,
+        public readonly kind: TestKind,
     ) {};
 
     public getId(): string {
@@ -39,7 +38,7 @@ export class TestableFile {
     constructor(
         public readonly file: vscode.TextDocument,
         public readonly workspace: vscode.WorkspaceFolder,
-        public readonly kind: string,
+        public readonly kind: TestKind,
     ) {};
 
     public getId(): string {
@@ -63,11 +62,14 @@ export class TestableFile {
         }
 
         const kind = pathParts.at(indexOfTest + 1);
-        if (kind === undefined || !allowedTestKinds.has(kind)) {
+        if (kind === undefined) {
+            return null;
+        }
+        if (!isAllowedTestKind(kind)) {
             return null;
         }
 
-        if (!document.uri.path.endsWith("-comp.ts")) {
+        if (!document.uri.path.endsWith(`-${kind}.ts`)) {
             return null;
         }
 

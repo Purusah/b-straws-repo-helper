@@ -6,6 +6,10 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+### Added
+
+- Run `spec` tests
+
 ## [0.3.0] - 2022-09-10
 
 ### Added

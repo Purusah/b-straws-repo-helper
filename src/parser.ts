@@ -1,10 +1,9 @@
 import * as ts from "typescript";
 import * as vscode from "vscode";
 import { TestableFunction, TestableFile } from "./repo";
+import { allowedTestIdentifiers, TestKind } from "./testKind";
 
-const testIdentifiers = ["ctest", "describe", "csuite"];
-
-const getTestFunctions = (source: ts.Node): ts.CallExpression[] => {
+const getTestFunctions = (source: ts.Node, kind: TestKind): ts.CallExpression[] => {
     const testFunctions: ts.CallExpression[] = [];
     source.forEachChild((node) => {
         if (!ts.isExpressionStatement(node)) {
@@ -15,7 +14,7 @@ const getTestFunctions = (source: ts.Node): ts.CallExpression[] => {
             return;
         }
         const maybeTestFunction = maybeCallExpression.expression;
-        if (!ts.isIdentifier(maybeTestFunction) || !testIdentifiers.includes(maybeTestFunction.text)) {
+        if (!ts.isIdentifier(maybeTestFunction) || !allowedTestIdentifiers[kind].includes(maybeTestFunction.text)) {
             return;
         }
 
@@ -28,9 +27,10 @@ const _parse = (
     source: ts.SourceFile,
     root: ts.Node,
     test: TestableFunction | TestableFile,
+    kind: TestKind,
     cb: (node: TestNode, parent: TestableFunction | TestableFile) => TestableFunction,
 ): void => {
-    const functions = getTestFunctions(root);
+    const functions = getTestFunctions(root, kind);
 
     let testNameLiteral: ts.Expression | undefined;
     let testArrowFunc: ts.Expression | undefined;
@@ -51,7 +51,7 @@ const _parse = (
         }
         const {line, character} = source.getLineAndCharacterOfPosition(testArrowFunc.pos);
         const suite = cb({name: testNameLiteral.text, line, character}, test);
-        _parse(source, testArrowFunc.body, suite, cb);
+        _parse(source, testArrowFunc.body, suite, kind, cb);
 
     });
 };
@@ -62,7 +62,7 @@ export const parse = (
     cb: (node: TestNode, parent: TestableFunction | TestableFile) => TestableFunction,
 ): void => {
     const source = ts.createSourceFile(code.uri.path, code.getText(), ts.ScriptTarget.ES2020);
-    _parse(source, source, test, cb);
+    _parse(source, source, test, test.kind, cb);
 };
 
 export interface TestNode {
