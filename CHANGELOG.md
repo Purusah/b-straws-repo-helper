@@ -6,6 +6,10 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+### Added
+
+- Run `ecomp` tests
+
 ## [0.4.0] - 2022-09-10
 
 ### Added

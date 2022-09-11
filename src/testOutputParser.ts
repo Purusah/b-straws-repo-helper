@@ -53,6 +53,7 @@ export class TestExecutor {
     private processes: TestOutputParser[];
     private testKindToCommand: {[key in TestKind]: string} = {
         "comp": "ctest",
+        "ecomp": "etest",
         "spec": "test",
     };
 

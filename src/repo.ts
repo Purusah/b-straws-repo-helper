@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { TestNode } from "./parser";
-import { isAllowedTestKind, TestKind } from "./testKind";
+import { isAllowedTestKind, TestKind, testKindToFileNameSuffix } from "./testKind";
 
 export class TestableService {
     public readonly type = "service";
@@ -69,7 +69,7 @@ export class TestableFile {
             return null;
         }
 
-        if (!document.uri.path.endsWith(`-${kind}.ts`)) {
+        if (!document.uri.path.endsWith(`-${testKindToFileNameSuffix[kind]}.ts`)) {
             return null;
         }
 

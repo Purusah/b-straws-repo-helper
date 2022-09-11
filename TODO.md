@@ -4,7 +4,6 @@
 - Add test failed result
 - Running parent test should properly parse children results
 - Parse stderr execution duration
-- Run ecomp tests
 - Run mcomp tests
 - Add tests
 - Prepublish script to update CHANGELOG version
