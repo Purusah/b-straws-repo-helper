@@ -13,7 +13,6 @@
 
 # Can't resolve
 
-- DO: reset test results after window reload
 - DO: reset test results after file reopening
 - DO [reset test results after file change](https://code.visualstudio.com/api/extension-guides/testing#publishonly-controllers)
 - DON'T: mark parent tests result as particular test run results

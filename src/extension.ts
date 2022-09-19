@@ -184,7 +184,7 @@ const onUpdateDocumentThrottled = (controller: vscode.TestController): (e: vscod
     };
 };
 
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
     const controller = vscode.tests.createTestController(
         "compTests",
         "B Comp Tests",
@@ -198,6 +198,7 @@ export function activate(context: vscode.ExtensionContext) {
         true,
     );
 
+    await vscode.commands.executeCommand("testing.clearTestResults");
     vscode.window.visibleTextEditors.forEach((e) => {
         onOpenDocument(controller, e.document);
     });
