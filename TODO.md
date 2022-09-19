@@ -6,6 +6,7 @@
 - Parse stderr execution duration
 - Run mcomp tests
 - Add tests
+- Basic repo validation
 - Prepublish script to update CHANGELOG version
 - Command to run any tests in any file
 - Command to run any tests in any folder
