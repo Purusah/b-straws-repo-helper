@@ -57,11 +57,11 @@ const _parse = (
 };
 
 export const parse = (
-    code: vscode.TextDocument,
+    document: vscode.TextDocument,
     test: TestableFile,
     cb: (node: TestNode, parent: TestableFunction | TestableFile) => TestableFunction,
 ): void => {
-    const source = ts.createSourceFile(code.uri.path, code.getText(), ts.ScriptTarget.ES2020);
+    const source = ts.createSourceFile(document.uri.path, document.getText(), ts.ScriptTarget.ES2020);
     _parse(source, source, test, test.kind, cb);
 };
 

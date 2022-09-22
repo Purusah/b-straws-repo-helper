@@ -21,12 +21,12 @@ export class TestableService {
     }
 
     public static new(file: TestableFile): TestableService | null {
-        const pathParts = file.file.uri.path.split("/");
+        const pathParts = file.file.path.split("/");
 
         const indexOfTest = pathParts.indexOf("test");
         const name = pathParts.at(indexOfTest - 1);
 
-        const folder = file.file.uri.with({path: pathParts.slice(0, indexOfTest + 2).join("/")});
+        const folder = file.file.with({path: pathParts.slice(0, indexOfTest + 2).join("/")});
 
         return new TestableService(name!, folder, file.workspace, file.kind);
     }
@@ -36,25 +36,25 @@ export class TestableFile {
     public readonly type = "file";
 
     constructor(
-        public readonly file: vscode.TextDocument,
+        public readonly file: vscode.Uri,
         public readonly workspace: vscode.WorkspaceFolder,
         public readonly kind: TestKind,
     ) {};
 
     public getId(): string {
-        return this.file.uri.toString();
+        return this.file.toString();
     }
 
     public getName(): string {
-        return this.file.uri.path.split("/").pop()!;
+        return this.file.path.split("/").pop()!;
     }
 
-    public static new(document: vscode.TextDocument): TestableFile | null {
-        if (document.uri.scheme !== "file") {
+    public static new(uri: vscode.Uri): TestableFile | null {
+        if (uri.scheme !== "file") {
             return null;
         }
 
-        const pathParts = document.uri.path.split("/");
+        const pathParts = uri.path.split("/");
 
         const indexOfTest = pathParts.indexOf("test");
         if (indexOfTest < 0) {
@@ -69,16 +69,16 @@ export class TestableFile {
             return null;
         }
 
-        if (!document.uri.path.endsWith(`-${testKindToFileNameSuffix[kind]}.ts`)) {
+        if (!uri.path.endsWith(`-${testKindToFileNameSuffix[kind]}.ts`)) {
             return null;
         }
 
-        const workspace = vscode.workspace.getWorkspaceFolder(document.uri);
+        const workspace = vscode.workspace.getWorkspaceFolder(uri);
         if (workspace === undefined) {
             return null;
         }
 
-        return new TestableFile(document, workspace, kind);
+        return new TestableFile(uri, workspace, kind);
     }
 }
 

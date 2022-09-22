@@ -8,6 +8,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ### Added
 
+- Command to run tests in any file/folder
 - Run `ecomp` tests
 - Test results are reset after window reload
 

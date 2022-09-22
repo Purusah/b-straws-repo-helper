@@ -75,14 +75,14 @@ export class TestExecutor {
             args = [
                 this.testKindToCommand[test.kind],
                 "--color",
-                relative(test.workspace.uri.fsPath, test.file.uri.fsPath),
+                relative(test.workspace.uri.fsPath, test.file.fsPath),
             ];
             cwd = test.workspace.uri.path;
             break;
         }
         case "function": {
             const parentFile = test.getParentFile();
-            const filePath = relative(parentFile.workspace.uri.fsPath, parentFile.file.uri.fsPath);
+            const filePath = relative(parentFile.workspace.uri.fsPath, parentFile.file.fsPath);
             args = [this.testKindToCommand[parentFile.kind], "--color", `-t="${test.getName()}"`, filePath];
             cwd = parentFile.workspace.uri.path;
             break;
