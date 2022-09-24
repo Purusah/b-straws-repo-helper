@@ -2,15 +2,31 @@ import * as vscode from "vscode";
 import { TestNode } from "./parser";
 import { isAllowedTestKind, TestKind, testKindToFileNameSuffix } from "./testKind";
 
-export class TestableService {
-    public readonly type = "service";
+const getPathTestKind = (pathFragments: string[]): TestKind | null => {
+    const indexOfTest = pathFragments.indexOf("test");
+    if (indexOfTest < 0) {
+        return null;
+    }
 
+    const kind = pathFragments.at(indexOfTest + 1);
+    if (kind === undefined) {
+        return null;
+    }
+    if (!isAllowedTestKind(kind)) {
+        return null;
+    }
+
+    return kind;
+};
+
+export class TestableFolder {
     constructor(
-        private readonly name: string,
+        protected readonly name: string,
         public readonly path: vscode.Uri,
         public readonly workspace: vscode.WorkspaceFolder,
         public readonly kind: TestKind,
-    ) {};
+    ) {
+    };
 
     public getId(): string {
         return `/${this.name}-${this.kind}`;
@@ -20,15 +36,55 @@ export class TestableService {
         return `${this.name}-${this.kind}`;
     }
 
-    public static new(file: TestableFile): TestableService | null {
-        const pathParts = file.file.path.split("/");
+    public static new(uri: vscode.Uri): TestableService | null {
+        const workspace = vscode.workspace.getWorkspaceFolder(uri);
+        if (workspace === undefined) {
+            return null;
+        }
+
+        const pathParts = uri.path.split("/");
+        const name = pathParts.at(-1);
+
+        const kind = getPathTestKind(pathParts);
+        if (kind === null) {
+            return null;
+        }
+
+        return new TestableService(name!, uri, workspace, kind);
+    }
+}
+
+export class TestableService extends TestableFolder {
+    public readonly type = "service";
+
+    constructor(
+        protected readonly name: string,
+        public readonly path: vscode.Uri,
+        public readonly workspace: vscode.WorkspaceFolder,
+        public readonly kind: TestKind,
+    ) {
+        super(name, path, workspace, kind);
+    };
+
+    public static new(uri: vscode.Uri): TestableService | null {
+        const workspace = vscode.workspace.getWorkspaceFolder(uri);
+        if (workspace === undefined) {
+            return null;
+        }
+
+        const pathParts = uri.path.split("/");
 
         const indexOfTest = pathParts.indexOf("test");
         const name = pathParts.at(indexOfTest - 1);
 
-        const folder = file.file.with({path: pathParts.slice(0, indexOfTest + 2).join("/")});
+        const folder = uri.with({path: pathParts.slice(0, indexOfTest + 2).join("/")});
 
-        return new TestableService(name!, folder, file.workspace, file.kind);
+        const kind = getPathTestKind(pathParts);
+        if (kind === null) {
+            return null;
+        }
+
+        return new TestableService(name!, folder, workspace, kind);
     }
 }
 
@@ -54,18 +110,8 @@ export class TestableFile {
             return null;
         }
 
-        const pathParts = uri.path.split("/");
-
-        const indexOfTest = pathParts.indexOf("test");
-        if (indexOfTest < 0) {
-            return null;
-        }
-
-        const kind = pathParts.at(indexOfTest + 1);
-        if (kind === undefined) {
-            return null;
-        }
-        if (!isAllowedTestKind(kind)) {
+        const kind = getPathTestKind(uri.path.split("/"));
+        if (kind === null) {
             return null;
         }
 
@@ -84,6 +130,7 @@ export class TestableFile {
 
 export class TestableFunction {
     public readonly type = "function";
+
     constructor(
         private readonly name: string,
         private readonly parent: TestableFunction | TestableFile,

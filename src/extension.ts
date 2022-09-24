@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { parse } from "./parser";
-import { Testable, TestableFile, TestableFunction, TestableService } from "./repo";
-import { TestExecutor } from "./testOutputParser";
+import { Testable, TestableFile, TestableFolder, TestableFunction, TestableService } from "./repo";
+import { TestTerminalExecutor, TestUiExecutor } from "./testOutputParser";
 
 const repoItemIdToItem: {[itemId: string]: vscode.TestItem} = {};
 const repoItemToTestable = new WeakMap<vscode.TestItem, Testable>();
@@ -73,7 +73,7 @@ const removeDocumentTests = (controller: vscode.TestController, document: vscode
         return;
     }
 
-    const service = TestableService.new(file);
+    const service = TestableService.new(document.uri);
     if (service === null) {
         return;
     }
@@ -127,7 +127,7 @@ const runDocumentTests = async (
 ): Promise<void> => {
     const run = controller.createTestRun(request, undefined, false);
 
-    const executor = new TestExecutor(run);
+    const executor = new TestUiExecutor(run);
     for (const item of request.include ?? getAllControllerTests(controller)) {
         if (token.isCancellationRequested) {
             continue;
@@ -148,13 +148,13 @@ const runDocumentTests = async (
 };
 
 const onOpenDocument = (controller: vscode.TestController, document: vscode.TextDocument) => {
-    const file = TestableFile.new(document.uri);
-    if (file === null) {
+    const service = TestableService.new(document.uri);
+    if (service === null) {
         return;
     }
 
-    const service = TestableService.new(file);
-    if (service === null) {
+    const file = TestableFile.new(document.uri);
+    if (file === null) {
         return;
     }
 
@@ -167,7 +167,7 @@ const onUpdateDocument = (controller: vscode.TestController, event: vscode.TextD
         return;
     }
 
-    const service = TestableService.new(file);
+    const service = TestableService.new(event.document.uri);
     if (service === null) {
         return;
     }
@@ -196,21 +196,22 @@ const handleCommandRunUriTests = (uri: vscode.Uri | vscode.Uri[]) => {
         return;
     }
 
+    let testable: Testable | null = null;
+
     const file = TestableFile.new(uri);
     if (file === null) {
         // only explorer/context menu returns folder
-        return;
+        testable = TestableFolder.new(uri);
+    } else {
+        testable = file;
+
     }
 
-    const service = TestableService.new(file);
-    if (service === null) {
+    if (testable === null) {
         return;
     }
-
-    // TODO run file
-    /*
-        2. this function should work
-    */
+    const executor = new TestTerminalExecutor();
+    executor.start(testable);
 };
 
 export async function activate(context: vscode.ExtensionContext) {
