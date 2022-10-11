@@ -1,5 +1,6 @@
 # Ideas
 
+- Fix test files with for loop
 - Update test names after file change without test tree collapsing
 - Add test failed result
 - Running parent test should properly parse children results
