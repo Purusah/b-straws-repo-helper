@@ -190,13 +190,16 @@ const onUpdateDocumentThrottled = (controller: vscode.TestController): (e: vscod
 };
 
 const handleCommandRunUriTests = (uri: vscode.Uri | vscode.Uri[]) => {
+    let testable: Testable | null = null;
+
     // explorer/context menu returns array
     if (Array.isArray(uri)) {
-        // TODO
-        return;
-    }
+        if (uri.length === 0) {
+            return;
+        }
 
-    let testable: Testable | null = null;
+        uri = uri.pop()!;
+    }
 
     const file = TestableFile.new(uri);
     if (file === null) {
@@ -204,7 +207,6 @@ const handleCommandRunUriTests = (uri: vscode.Uri | vscode.Uri[]) => {
         testable = TestableFolder.new(uri);
     } else {
         testable = file;
-
     }
 
     if (testable === null) {
