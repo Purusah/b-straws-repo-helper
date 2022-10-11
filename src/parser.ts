@@ -52,7 +52,6 @@ const _parse = (
         const {line, character} = source.getLineAndCharacterOfPosition(testArrowFunc.pos);
         const suite = cb({name: testNameLiteral.text, line, character}, test);
         _parse(source, testArrowFunc.body, suite, kind, cb);
-
     });
 };
 

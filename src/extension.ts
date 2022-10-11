@@ -197,8 +197,8 @@ const handleCommandRunUriTests = (uri: vscode.Uri | vscode.Uri[]) => {
         if (uri.length === 0) {
             return;
         }
-
-        uri = uri.pop()!;
+        // only one path is passed here (right clicked context menu)
+        uri = uri[0];
     }
 
     const file = TestableFile.new(uri);

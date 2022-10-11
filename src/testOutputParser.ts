@@ -45,7 +45,6 @@ class TestOutputParser {
 
     public kill(): boolean {
         return this.proc.kill();
-
     }
 }
 
@@ -140,6 +139,5 @@ export class TestTerminalExecutor extends TestExecutor {
         terminal.show(true);
         // await vscode.commands.executeCommand("workbench.action.terminal.clear");
         terminal.sendText([command, ...args].join(" "));
-
     }
 }
