@@ -1,12 +1,17 @@
 import * as vscode from "vscode";
 import { parse } from "./parser";
-import { Testable, TestableFile, TestableFunction, TestableService } from "./repo";
-import { TestExecutor } from "./testOutputParser";
+import { Testable, TestableFile, TestableFolder, TestableFunction, TestableService } from "./repo";
+import { TestTerminalExecutor, TestUiExecutor } from "./testOutputParser";
 
 const repoItemIdToItem: {[itemId: string]: vscode.TestItem} = {};
 const repoItemToTestable = new WeakMap<vscode.TestItem, Testable>();
 
-const addDocumentTests = (controller: vscode.TestController, service: TestableService, file: TestableFile) => {
+const addDocumentTests = (
+    controller: vscode.TestController,
+    service: TestableService,
+    file: TestableFile,
+    document: vscode.TextDocument,
+) => {
     let serviceItem = controller.items.get(service.getId());
     if (serviceItem === undefined) {
         serviceItem = controller.createTestItem(service.getId(), service.getName(), undefined);
@@ -18,7 +23,7 @@ const addDocumentTests = (controller: vscode.TestController, service: TestableSe
 
     let fileItem = serviceItem.children.get(file.getId());
     if (fileItem === undefined) {
-        fileItem = controller.createTestItem(file.getId(), file.getName(), file.file.uri);
+        fileItem = controller.createTestItem(file.getId(), file.getName(), file.file);
 
         serviceItem.children.add(fileItem);
         repoItemIdToItem[fileItem.id] = fileItem;
@@ -26,7 +31,7 @@ const addDocumentTests = (controller: vscode.TestController, service: TestableSe
     }
 
     let sortCounter = 0; // to keep the view tests order similar to to the file
-    parse(file.file, file, (node, parent) => {
+    parse(document, file, (node, parent) => {
         const parentTestItem = repoItemIdToItem[parent.getId()];
         if (parentTestItem === undefined) {
             throw new Error("parent should be present");
@@ -37,7 +42,7 @@ const addDocumentTests = (controller: vscode.TestController, service: TestableSe
 
         // test not seen before
         if (nodeTestItem === undefined) {
-            nodeTestItem = controller.createTestItem(nodeTest.getId(), nodeTest.getName(), file.file.uri);
+            nodeTestItem = controller.createTestItem(nodeTest.getId(), nodeTest.getName(), document.uri);
             nodeTestItem.sortText = String(sortCounter++);
             const testPosition = new vscode.Position(node.line, node.character);
             nodeTestItem.range = new vscode.Range(testPosition, testPosition);
@@ -63,12 +68,12 @@ const addDocumentTests = (controller: vscode.TestController, service: TestableSe
 };
 
 const removeDocumentTests = (controller: vscode.TestController, document: vscode.TextDocument) => {
-    const file = TestableFile.new(document);
+    const file = TestableFile.new(document.uri);
     if (file === null) {
         return;
     }
 
-    const service = TestableService.new(file);
+    const service = TestableService.new(document.uri);
     if (service === null) {
         return;
     }
@@ -122,7 +127,7 @@ const runDocumentTests = async (
 ): Promise<void> => {
     const run = controller.createTestRun(request, undefined, false);
 
-    const executor = new TestExecutor(run);
+    const executor = new TestUiExecutor(run);
     for (const item of request.include ?? getAllControllerTests(controller)) {
         if (token.isCancellationRequested) {
             continue;
@@ -143,32 +148,32 @@ const runDocumentTests = async (
 };
 
 const onOpenDocument = (controller: vscode.TestController, document: vscode.TextDocument) => {
-    const file = TestableFile.new(document);
-    if (file === null) {
-        return;
-    }
-
-    const service = TestableService.new(file);
+    const service = TestableService.new(document.uri);
     if (service === null) {
         return;
     }
 
-    addDocumentTests(controller, service, file);
-};
-
-const onUpdateDocument = (controller: vscode.TestController, event: vscode.TextDocumentChangeEvent) => {
-    const file = TestableFile.new(event.document);
+    const file = TestableFile.new(document.uri);
     if (file === null) {
         return;
     }
 
-    const service = TestableService.new(file);
+    addDocumentTests(controller, service, file, document);
+};
+
+const onUpdateDocument = (controller: vscode.TestController, event: vscode.TextDocumentChangeEvent) => {
+    const file = TestableFile.new(event.document.uri);
+    if (file === null) {
+        return;
+    }
+
+    const service = TestableService.new(event.document.uri);
     if (service === null) {
         return;
     }
 
     removeDocumentTests(controller, event.document);
-    addDocumentTests(controller, service, file);
+    addDocumentTests(controller, service, file, event.document);
 };
 
 const onUpdateDocumentThrottled = (controller: vscode.TestController): (e: vscode.TextDocumentChangeEvent) => void => {
@@ -184,7 +189,35 @@ const onUpdateDocumentThrottled = (controller: vscode.TestController): (e: vscod
     };
 };
 
+const handleCommandRunUriTests = (uri: vscode.Uri | vscode.Uri[]) => {
+    let testable: Testable | null = null;
+
+    // explorer/context menu returns array
+    if (Array.isArray(uri)) {
+        if (uri.length === 0) {
+            return;
+        }
+        // only one path is passed here (right clicked context menu)
+        uri = uri[0];
+    }
+
+    const file = TestableFile.new(uri);
+    if (file === null) {
+        // only explorer/context menu returns folder
+        testable = TestableFolder.new(uri);
+    } else {
+        testable = file;
+    }
+
+    if (testable === null) {
+        return;
+    }
+    const executor = new TestTerminalExecutor();
+    executor.start(testable);
+};
+
 export async function activate(context: vscode.ExtensionContext) {
+    // register test controller
     const controller = vscode.tests.createTestController(
         "compTests",
         "B Comp Tests",
@@ -203,12 +236,15 @@ export async function activate(context: vscode.ExtensionContext) {
         onOpenDocument(controller, e.document);
     });
 
-    // update available tests on
+    // subscribe to file changes
     context.subscriptions.push(
         vscode.workspace.onDidOpenTextDocument(e => onOpenDocument(controller, e)),
         vscode.workspace.onDidChangeTextDocument(onUpdateDocumentThrottled(controller)),
         vscode.workspace.onDidCloseTextDocument(e => removeDocumentTests(controller, e)),
     );
+
+    // register commands
+    context.subscriptions.push(vscode.commands.registerCommand("bRepoHelper.runTests", handleCommandRunUriTests));
 }
 
 export function deactivate() {}

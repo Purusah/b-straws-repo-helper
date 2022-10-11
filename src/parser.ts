@@ -52,16 +52,15 @@ const _parse = (
         const {line, character} = source.getLineAndCharacterOfPosition(testArrowFunc.pos);
         const suite = cb({name: testNameLiteral.text, line, character}, test);
         _parse(source, testArrowFunc.body, suite, kind, cb);
-
     });
 };
 
 export const parse = (
-    code: vscode.TextDocument,
+    document: vscode.TextDocument,
     test: TestableFile,
     cb: (node: TestNode, parent: TestableFunction | TestableFile) => TestableFunction,
 ): void => {
-    const source = ts.createSourceFile(code.uri.path, code.getText(), ts.ScriptTarget.ES2020);
+    const source = ts.createSourceFile(document.uri.path, document.getText(), ts.ScriptTarget.ES2020);
     _parse(source, source, test, test.kind, cb);
 };
 

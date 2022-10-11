@@ -45,23 +45,17 @@ class TestOutputParser {
 
     public kill(): boolean {
         return this.proc.kill();
-
     }
 }
 
-export class TestExecutor {
-    private processes: TestOutputParser[];
+abstract class TestExecutor {
     private testKindToCommand: {[key in TestKind]: string} = {
         "comp": "ctest",
         "ecomp": "etest",
         "spec": "test",
     };
 
-    constructor(private readonly runner: vscode.TestRun) {
-        this.processes = [];
-    }
-
-    public start(item: vscode.TestItem, test: Testable) {
+    protected getCommand(test: Testable): [string, string[], string] {
         let args: string[];
         let cwd: string;
 
@@ -69,27 +63,40 @@ export class TestExecutor {
         case "service": {
             args = [this.testKindToCommand[test.kind], "--color", test.path.fsPath];
             cwd = test.workspace.uri.path;
-            break;
+            return ["yarn", args, cwd];
         }
         case "file": {
             args = [
                 this.testKindToCommand[test.kind],
                 "--color",
-                relative(test.workspace.uri.fsPath, test.file.uri.fsPath),
+                relative(test.workspace.uri.fsPath, test.file.fsPath),
             ];
             cwd = test.workspace.uri.path;
-            break;
+            return ["yarn", args, cwd];
         }
         case "function": {
             const parentFile = test.getParentFile();
-            const filePath = relative(parentFile.workspace.uri.fsPath, parentFile.file.uri.fsPath);
+            const filePath = relative(parentFile.workspace.uri.fsPath, parentFile.file.fsPath);
             args = [this.testKindToCommand[parentFile.kind], "--color", `-t="${test.getName()}"`, filePath];
             cwd = parentFile.workspace.uri.path;
-            break;
+            return ["yarn", args, cwd];
         }}
+    }
+}
+
+export class TestUiExecutor extends TestExecutor {
+    private processes: TestOutputParser[];
+
+    constructor(private readonly runner: vscode.TestRun) {
+        super();
+        this.processes = [];
+    }
+
+    public start(item: vscode.TestItem, test: Testable) {
+        const [command, args, cwd] = this.getCommand(test);
 
         const cp = subprocess.spawn(
-            "yarn", args,
+            command, args,
             {
                 stdio: "pipe",
                 cwd,
@@ -111,5 +118,26 @@ export class TestExecutor {
                 wait = false;
             }
         }
+    }
+}
+
+export class TestTerminalExecutor extends TestExecutor {
+    private readonly terminalName: string = "Repo Tests";
+
+    constructor() {
+        super();
+    }
+
+    public start(test: Testable) {
+        const [command, args, _] = this.getCommand(test);
+
+        let terminal = vscode.window.terminals.find((t) => t.name === this.terminalName);
+        if (terminal === undefined) {
+            terminal = vscode.window.createTerminal(this.terminalName);
+        }
+
+        terminal.show(true);
+        // await vscode.commands.executeCommand("workbench.action.terminal.clear");
+        terminal.sendText([command, ...args].join(" "));
     }
 }

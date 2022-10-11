@@ -20,9 +20,40 @@
   "publisher": "purusah",
   "version": "0.4.0",
   "activationEvents": [
+    "onCommand:bRepoHelper.runTests",
     "onFileSystem:file"
   ],
-  "contributes": {},
+  "contributes": {
+    "commands": [
+      {
+        "command": "bRepoHelper.runTests",
+        "title": "B Repo: Run Tests"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "bRepoHelper.runTests",
+          "group": "10_repo@1",
+          "when": "resource =~ /^.*\\/(comp|ecomp|spec)(\\/?|\\/.*)$/"
+        }
+      ],
+      "editor/title/context": [
+        {
+          "command": "bRepoHelper.runTests",
+          "group": "10_repo@1",
+          "when": "resource =~ /^.*\\/(comp|ecomp|spec)(\\/?|\\/.*)$/"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "bRepoHelper.runTests",
+          "group": "6_repo@1",
+          "when": "resource =~ /^.*\\/(comp|ecomp|spec)(\\/?|\\/.*)$/"
+        }
+      ]
+    }
+  },
   "scripts": {
     "vscode:prepublish": "npm run lint && npm run compile",
     "compile": "tsc -p ./",

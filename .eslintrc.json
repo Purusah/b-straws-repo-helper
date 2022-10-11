@@ -61,11 +61,22 @@
             }
         ],
         "no-throw-literal": "warn",
+        "padded-blocks": [
+            "error",
+            "never",
+            {
+                "allowSingleLineBlocks": true
+            }
+        ],
         "quotes": [
             "error",
             "double"
         ],
-        "semi": "off",
+        "semi": [
+            "error",
+            "always"
+        ],
+        "semi-spacing": "error",
         "space-before-blocks": "error",
         "space-in-parens": [
             "error",
