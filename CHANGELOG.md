@@ -6,6 +6,10 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+## [0.5.1] - 2022-10-13
+
+- Script to update CHANGELOG version
+
 ## [0.5.0] - 2022-10-11
 
 ### Added

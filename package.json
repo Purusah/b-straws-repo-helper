@@ -59,13 +59,16 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
+    "publish": "npm run publish:minor",
+    "publish:minor": "node scripts/publish.mjs minor && vsce publish minor",
+    "publish:patch": "node scripts/publish.mjs patch && vsce publish patch",
     "lint": "eslint src --ext ts",
     "test": "node ./out/test/runTest.js"
   },
   "devDependencies": {
     "@types/glob": "^7.2.0",
     "@types/mocha": "^9.1.1",
-    "@types/node": "16.x",
+    "@types/node": "18.x",
     "@types/vscode": "^1.70.0",
     "@typescript-eslint/eslint-plugin": "5.40.0",
     "@typescript-eslint/parser": "5.40.0",
