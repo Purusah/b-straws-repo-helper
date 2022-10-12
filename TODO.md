@@ -9,7 +9,7 @@
 - Add tests
 - Basic repo validation
 - Long time no response -> check env -> check docker
-- Prepublish script to update CHANGELOG version
+- Publish via [GitHub Actions](https://docs.github.com/en/actions)
 - [Bundling](https://code.visualstudio.com/api/working-with-extensions/bundling-extension#using-webpack) with Webpack
 
 # Can't resolve
