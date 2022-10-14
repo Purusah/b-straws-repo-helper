@@ -12,6 +12,17 @@ on:
       - 'package-lock.json'
       - 'tsconfig.json'
       - '**.ts'
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Version'
+        required: true
+        default: 'minor'
+        type: choice
+        options:
+        - major
+        - minor
+        - patch
 
 jobs:
   build:
@@ -20,20 +31,21 @@ jobs:
       fail-fast: true
     env:
       NODE_ENV: development
-
-
     steps:
       - uses: actions/checkout@v2
-
       - uses: actions/setup-node@v2
         with:
           node-version: "16"
-
       - name: Install dependencies
         run: npm ci
-
       - name: Lint
         run: npm run lint
-
       - name: Compile TypeScript
         run: npm run compile
+
+  publish:
+    runs-on: ubuntu-latest
+    if:  ${{ inputs.publish }}
+    steps:
+      - name: Print the input version to STDOUT
+        run: echo  The tags are ${{ inputs.publish }}
