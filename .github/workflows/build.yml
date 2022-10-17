@@ -1,4 +1,4 @@
-name: Extension CI/CD
+name: Build Extension
 
 on:
   push:
@@ -12,17 +12,14 @@ on:
       - 'package-lock.json'
       - 'tsconfig.json'
       - '**.ts'
-  workflow_dispatch:
+  workflow_call:
     inputs:
-      version:
-        description: 'Version'
+      config-path:
         required: true
-        default: 'minor'
-        type: choice
-        options:
-        - major
-        - minor
-        - patch
+        type: string
+    secrets:
+      envPAT:
+        required: true
 
 jobs:
   build:
@@ -32,8 +29,8 @@ jobs:
     env:
       NODE_ENV: development
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
         with:
           node-version: "16"
       - name: Install dependencies
@@ -42,10 +39,3 @@ jobs:
         run: npm run lint
       - name: Compile TypeScript
         run: npm run compile
-
-  publish:
-    runs-on: ubuntu-latest
-    if:  ${{ inputs.publish }}
-    steps:
-      - name: Print the input version to STDOUT
-        run: echo  The tags are ${{ inputs.publish }}

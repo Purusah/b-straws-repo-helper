@@ -1,0 +1,25 @@
+name: Publish Extension
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version'
+        required: true
+        default: 'minor'
+        type: choice
+        options:
+        - major
+        - minor
+        - patch
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yml@main
+  publish:
+    if:  ${{ inputs.publish }}
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print the input version to STDOUT
+        run: echo  The tags are ${{ inputs.publish }}
