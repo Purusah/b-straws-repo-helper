@@ -5,14 +5,14 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version'
+        description: "Version"
         required: true
-        default: 'minor'
+        default: "minor"
         type: choice
         options:
-        - major
-        - minor
-        - patch
+          - major
+          - minor
+          - patch
 
 jobs:
   build:
@@ -22,10 +22,12 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: true
+      matrix:
+        version: [16]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: "16"
+          node-version: ${{ matrix.version }}
       - name: Print the input version to STDOUT
         run: echo  The tags are ${{ inputs.publish }}

@@ -6,12 +6,12 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - '.eslintrc.json'
-      - '.github/workflows/*'
-      - 'package.json'
-      - 'package-lock.json'
-      - 'tsconfig.json'
-      - '**.ts'
+      - ".eslintrc.json"
+      - ".github/workflows/*"
+      - "package.json"
+      - "package-lock.json"
+      - "tsconfig.json"
+      - "**.ts"
   workflow_call:
     secrets:
       envPAT:
@@ -22,13 +22,15 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: true
+      matrix:
+        version: [16]
     env:
       NODE_ENV: development
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: "16"
+          node-version: ${{ matrix.version }}
       - name: Install dependencies
         run: npm ci
       - name: Lint
