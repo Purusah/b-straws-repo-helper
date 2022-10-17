@@ -14,7 +14,7 @@ on:
       - '**.ts'
   workflow_dispatch:
     inputs:
-      publish:
+      version:
         description: 'Version'
         required: true
         default: 'minor'
