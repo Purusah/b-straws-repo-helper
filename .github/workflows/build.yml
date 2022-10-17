@@ -13,7 +13,6 @@ on:
       - 'tsconfig.json'
       - '**.ts'
   workflow_call:
-    inputs:
     secrets:
       envPAT:
         required: false
