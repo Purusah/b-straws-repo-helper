@@ -1,4 +1,5 @@
 name: Publish Extension
+run-name: Publish Extension ${{ inputs.publish }} Version
 
 on:
   workflow_dispatch:
@@ -18,7 +19,9 @@ jobs:
     uses: ./.github/workflows/build.yml
   publish:
     if:  ${{ inputs.publish }}
-    needs: [build]
+    needs:
+      build:
+        result: success
     runs-on: ubuntu-latest
     strategy:
       fail-fast: true
