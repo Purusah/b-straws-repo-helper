@@ -1,5 +1,5 @@
 name: Publish Extension
-run-name: Publish Extension ${{ inputs.publish }} Version
+run-name: Publish Extension ${{ inputs.version }} Version
 
 on:
   workflow_dispatch:
@@ -20,14 +20,10 @@ jobs:
   publish:
     needs: [build]
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: true
-      matrix:
-        version: [16]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: ${{ matrix.version }}
+          node-version: 16
       - name: Print the input version to STDOUT
-        run: echo  The tags are ${{ inputs.publish }}
+        run: echo  The tags are ${{ inputs.version }}
