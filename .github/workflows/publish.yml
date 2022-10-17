@@ -18,9 +18,7 @@ jobs:
   build:
     uses: ./.github/workflows/build.yml
   publish:
-    if:  ${{ inputs.publish }}
     needs: [build]
-    if: always() && needs.build.result == 'success'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: true
