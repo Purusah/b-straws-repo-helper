@@ -30,12 +30,12 @@ jobs:
         with:
           node-version: 16
       - run: |
-          sudo apt-get install -y libsecret-1-dev
+          sudo apt -y install libsecret-1-dev
           npm install --global vsce
-      - run: npm install
       - run: echo $EXTENSION_TOKEN | vsce login $EXTENSION_PUBLISHER
         env:
           EXTENSION_PUBLISHER: ${{ secrets.EXTENSION_PUBLISHER }}
           EXTENSION_TOKEN: ${{ secrets.EXTENSION_TOKEN }}
+      - run: npm install
       - run: npm run publish -- ${{ inputs.version }}
       - run: git push origin HEAD
