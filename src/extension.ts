@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
+import { TestTerminalExecutor } from "./executor";
 import { Testable, TestableFile, TestableFolder, TestableService } from "./repo";
-import { TestTerminalExecutor } from "./testOutputParser";
 import { getAllControllerTests, registerDocumentTests, removeDocumentTests, runDocumentTests } from "./view";
 
 const onCommandRunUriTests = (uri: vscode.Uri | vscode.Uri[]) => {

@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
+import { TestUiExecutor } from "./executor";
 import { parse } from "./parser";
 import { Testable, TestableFile, TestableFunction, TestableService } from "./repo";
-import { TestUiExecutor } from "./testOutputParser";
 
 const repoItemIdToItem: {[itemId: string]: vscode.TestItem} = {};
 const repoItemToTestable = new WeakMap<vscode.TestItem, Testable>();
