@@ -1,12 +1,12 @@
 # Ideas
 
-- Fix test files with for loop
 - Update test names after file change without test tree collapsing
 - Add test failed result
 - Running parent test should properly parse children results
 - Parse stderr execution duration
 - Run mcomp tests + package.json contributes.menus.\*.when
 - Add tests
+- Replace throttling with queueing and executing the last one
 - Basic repo validation
 - Long time no response -> check env -> check docker
 - [Bundling](https://code.visualstudio.com/api/working-with-extensions/bundling-extension#using-webpack) with Webpack
