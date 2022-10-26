@@ -5,6 +5,10 @@ import {promisify} from "node:util";
 
 const runCommand = promisify(exec);
 
+const VERSION_MAJOR = "major";
+const VERSION_MINOR = "minor";
+const VERSION_PATCH = "patch";
+
 const changelogFile = path.join(process.cwd(), "CHANGELOG.md");
 const emptyLine = "";
 const encoding = "utf8";
@@ -16,32 +20,28 @@ const versionLineMatcher = /## \[(\d\.\d\.\d)\]/;
  *
  * @param {string[]} args
  *
- * @returns {object} diff to apply to the last published version
+ * @returns {VERSION_MAJOR | VERSION_MINOR | VERSION_PATCH} diff to apply to the last published version
  */
-const readInput = (args) => {
-    const increment = {major: 0, minor: 0, patch: 0};
-    const parameter = args[2];
-
-    if (args.length !== 3 || !Object.keys(increment).includes(parameter)) {
+const readVersionType = (args) => {
+    const version = args[2];
+    if (args.length !== 3 || ![VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH].includes(version)) {
         throw new Error("one parameter must be passed major|minor|patch");
     }
 
-    increment[parameter] += 1;
-
-    return increment;
+    return version;
 };
 
 /**
  *
  * @param {string} content file content
- * @param {object} increment file content
+ * @param {VERSION_MAJOR | VERSION_MINOR | VERSION_PATCH} version file content
  *
  * @returns file new content
  */
-const parseFile = async (content, increment) => {
+const parseFile = async (content, versionType) => {
     let lineNumber = 0;
     let unreleasedLineNumber = null;
-    const version = {major: 0, minor: 0, patch: 0};
+    const newVersion = {major: 0, minor: 0, patch: 0};
     const lines = content.split(newLineCharacter);
 
     for (const line of lines) {
@@ -57,9 +57,23 @@ const parseFile = async (content, increment) => {
                 throw new Error("wrong version format");
             }
 
-            version.major = parseInt(parts[0], 10) + increment.major;
-            version.minor = parseInt(parts[1], 10) + increment.minor;
-            version.patch = parseInt(parts[2], 10) + increment.patch;
+            const oldMajorVersion = parseInt(parts[0], 10);
+            const oldMinorVersion = parseInt(parts[1], 10);
+            const oldPatchVersion = parseInt(parts[2], 10);
+
+            if (versionType === "major") {
+                newVersion.major = oldMajorVersion + 1;
+            } else if (versionType === "minor") {
+                newVersion.major = oldMajorVersion;
+                newVersion.minor = oldMinorVersion + 1;
+            } else if (versionType === "patch") {
+                newVersion.major = oldMajorVersion;
+                newVersion.minor = oldMinorVersion;
+                newVersion.patch = oldPatchVersion + 1;
+            } else {
+                throw new Error("wrong version type");
+            }
+
             break;
         }
 
@@ -73,7 +87,8 @@ const parseFile = async (content, increment) => {
     const now = new Date();
     const month = now.getMonth() + 1 < 10 ? `0${now.getMonth() + 1}` : (now.getMonth() + 1).toString();
     const day = now.getDate() + 1 < 10 ? `0${now.getDate() + 1}` : (now.getDate() + 1).toString();
-    const versionString = `${version.major}.${version.minor}.${version.patch}`;
+    const versionString = `${newVersion.major}.${newVersion.minor}.${newVersion.patch}`;
+
     return {
         content: [
             ...lines.slice(0, unreleasedLineNumber + 1),
@@ -91,11 +106,11 @@ const parseFile = async (content, increment) => {
  * @param {string} parameter parameter passed to the function
  */
 const main = async (args) => {
-    const increment = readInput(args);
+    const versionType = readVersionType(args);
     const file = await fs.open(changelogFile, "r+");
 
     const changelogContent = await file.readFile({encoding});
-    const {content, version} = await parseFile(changelogContent, increment);
+    const {content, version} = await parseFile(changelogContent, versionType);
 
     const result = await file.write(content, 0, encoding);
     if (result === undefined || result.bytesWritten === 0) {

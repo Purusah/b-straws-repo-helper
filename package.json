@@ -59,7 +59,6 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
-    "publish": "npm run publish:minor",
     "publish:major": "node scripts/publish.mjs major && vsce publish major",
     "publish:minor": "node scripts/publish.mjs minor && vsce publish minor",
     "publish:patch": "node scripts/publish.mjs patch && vsce publish patch",
