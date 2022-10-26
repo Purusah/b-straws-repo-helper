@@ -5,11 +5,10 @@
 - Add test failed result
 - Running parent test should properly parse children results
 - Parse stderr execution duration
-- Run mcomp tests + package.json contributes.menus.*.when
+- Run mcomp tests + package.json contributes.menus.\*.when
 - Add tests
 - Basic repo validation
 - Long time no response -> check env -> check docker
-- Publish via [GitHub Actions](https://docs.github.com/en/actions)
 - [Bundling](https://code.visualstudio.com/api/working-with-extensions/bundling-extension#using-webpack) with Webpack
 
 # Can't resolve
