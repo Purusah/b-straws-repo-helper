@@ -1,7 +1,7 @@
 import * as ts from "typescript";
 import * as vscode from "vscode";
 import { TestableFunction, TestableFile } from "./repo";
-import { allowedTestIdentifiers, TestKind } from "./testKind";
+import { allowedTestIdentifiers, TestKind } from "./TestKindHelper";
 
 export class TestFileAstParser {
     static getTestFunctions = (source: ts.Node, kind: TestKind): ts.CallExpression[] => {

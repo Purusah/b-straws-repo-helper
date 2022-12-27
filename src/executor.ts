@@ -2,7 +2,7 @@ import * as subprocess from "node:child_process";
 import { relative } from "node:path/posix";
 import * as vscode from "vscode";
 import { Testable } from "./repo";
-import { TestKind } from "./testKind";
+import { TestKind } from "./TestKindHelper";
 
 class TestOutputParser {
     isReady: boolean = false;

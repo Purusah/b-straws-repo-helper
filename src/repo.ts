@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { TestNode } from "./TestFileAstParser";
-import { isAllowedTestKind, TestKind, testKindToFileNameSuffix } from "./testKind";
+import { isAllowedTestKind, TestKind, testKindToFileNameSuffix } from "./TestKindHelper";
 
 const getPathTestKind = (pathFragments: string[]): TestKind | null => {
     const indexOfTest = pathFragments.indexOf("test");
