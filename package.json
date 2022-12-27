@@ -55,15 +55,17 @@
     }
   },
   "scripts": {
+    "bundle": "npm run bundle:base -- --sourcemap",
+    "bundle:base": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node",
     "check:compile": "tsc -p ./",
     "check:lint": "eslint src --ext ts",
     "check:test": "node ./out/test/runTest.js",
-    "pretest": "npm run check:lint && npm run check:compile",
-    "publish:major": "node scripts/publish.mjs major && vsce publish major",
-    "publish:minor": "node scripts/publish.mjs minor && vsce publish minor",
-    "publish:patch": "node scripts/publish.mjs patch && vsce publish patch",
-    "vscode:prepublish": "npm run pretest",
-    "watch": "tsc -watch -p ./"
+    "check:pretest": "npm run check:lint && npm run check:compile",
+    "publish:major": "npm run check:pretest && node scripts/publish.mjs major && vsce publish major",
+    "publish:minor": "npm run check:pretest && node scripts/publish.mjs minor && vsce publish minor",
+    "publish:patch": "npm run check:pretest && node scripts/publish.mjs patch && vsce publish patch",
+    "vscode:prepublish": "npm run bundle:base -- --minify",
+    "watch": "npm run bundle:base -- --sourcemap --watch"
   },
   "devDependencies": {
     "@types/glob": "^7.2.0",
@@ -73,6 +75,7 @@
     "@typescript-eslint/eslint-plugin": "5.47.1",
     "@typescript-eslint/parser": "5.47.1",
     "@vscode/test-electron": "^2.1.5",
+    "esbuild": "^0.16.11",
     "eslint": "8.30.0",
     "glob": "^8.0.3",
     "mocha": "^10.0.0"

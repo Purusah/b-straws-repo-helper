@@ -6,6 +6,10 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+### Changed
+
+- Bundle and minify extension with `esbuild` (size decreased 20 times to 3.5 MB)
+
 ### Fixed
 
 - `fctest` wasn't shown as testing item
