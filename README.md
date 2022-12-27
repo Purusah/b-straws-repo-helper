@@ -1,6 +1,6 @@
 # B Repo Helper
 
-**:warning: Please, don't install it if you are not sure you need it :warning:**
+**⚠ Please, don't install it if you are not sure you need it ⚠**
 
 Set of repository commands to decrease editor-terminal context switches
 
