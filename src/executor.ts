@@ -6,24 +6,32 @@ import { TestKind } from "./TestKindHelper";
 
 class TestOutputParser {
     isReady: boolean = false;
+    static testFailedGlyph = "○";
+    static testPassedGlyph = "✓";
+    static testSkippedGlyph = "○";
 
     constructor(
         private readonly proc: subprocess.ChildProcessWithoutNullStreams,
         private readonly item: vscode.TestItem,
         private readonly run: vscode.TestRun,
     ) {
-        let testResultOk = false;
+        let isTestResultOk = false;
+        const parser = TestOutputParser.initTestResultParser();
 
+        // stderr has test results, execution time, total results
         this.proc.stderr.setEncoding("utf-8").on("data", (data: string) => {
+            // clean data from escape characters for parsing
             const cleanedData = data.replace(
                 /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g,
                 "",
             ).trimStart();
-            if (!testResultOk && cleanedData.startsWith("PASS")) {
-                testResultOk = true;
-            }
+            isTestResultOk = parser(cleanedData);
+
+            // proxy to the console
             run.appendOutput(data.replace(/(?<!\r)\n/gm, "\r\n"), undefined, this.item);
         });
+
+        // stdout has service logs, proxy to the console
         this.proc.stdout.setEncoding("utf-8").on("data", (data: string) => {
             run.appendOutput(data.replace(/(?<!\r)\n/gm, "\r\n"), undefined, this.item);
         });
@@ -35,13 +43,25 @@ class TestOutputParser {
                 return;
             }
 
-            if (testResultOk) {
+            if (isTestResultOk) {
                 this.run.passed(this.item);
             } else {
                 this.run.errored(this.item, {message: "failed"});
             }
         });
     };
+
+    private static initTestResultParser() {
+        let isTestResultOk = false;
+
+        return (data: string): boolean => {
+            if (!isTestResultOk && data.startsWith("PASS")) {
+                isTestResultOk = true;
+            }
+
+            return isTestResultOk;
+        };
+    }
 
     public kill(): boolean {
         return this.proc.kill();
