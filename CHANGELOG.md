@@ -6,6 +6,8 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+## [0.7.0] - 2022-12-28
+
 ### Changed
 
 - Bundle and minify extension with `esbuild` (size decreased 20 times to 3.5 MB)
