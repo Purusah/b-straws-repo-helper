@@ -1,7 +1,7 @@
 export type TestKind = "comp" | "ecomp" | "spec";
 
 export const allowedTestIdentifiers: {[key in TestKind]: string[]} = {
-    "comp": ["ctest", "describe", "csuite"],
+    "comp": ["fctest", "ctest", "describe", "csuite"],
     "ecomp": ["ctest", "describe", "csuite"],
     "spec": ["it", "describe"],
 };

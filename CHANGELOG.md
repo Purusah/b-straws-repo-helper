@@ -6,6 +6,10 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+### Fixed
+
+- `fctest` wasn't shown as testing item
+
 ## [0.6.0] - 2022-10-25
 
 - Publish extension with GitHub Actions
