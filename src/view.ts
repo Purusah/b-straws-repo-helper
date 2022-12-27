@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { TestUiExecutor } from "./executor";
-import { parse } from "./parser";
+import { TestFileAstParser} from "./TestFileAstParser";
 import { Testable, TestableFile, TestableFunction, TestableService } from "./repo";
 
 const repoItemIdToItem: {[itemId: string]: vscode.TestItem} = {};
@@ -39,7 +39,7 @@ export const registerDocumentTests = (
     }
 
     let sortCounter = 0; // to keep the view tests order similar to to the file
-    parse(document, file, (node, parent) => {
+    TestFileAstParser.parse(document, file, (node, parent) => {
         const parentTestItem = repoItemIdToItem[parent.getId()];
         if (parentTestItem === undefined) {
             throw new Error("parent should be present");
